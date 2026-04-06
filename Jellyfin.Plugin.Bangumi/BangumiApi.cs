@@ -420,6 +420,18 @@ public partial class BangumiApi
         return await Get<DataList<EpisodeCollectionInfo>>($"{BaseUrl}/v0/users/-/collections/{subjectId}/episodes?episode_type={episodeType}", accessToken, token, false);
     }
 
+    public async Task<SubjectCollectionInfo?> GetSubjectCollectionStatus(string accessToken, int subjectId, CancellationToken token)
+    {
+        try
+        {
+            return await Get<SubjectCollectionInfo>($"{BaseUrl}/v0/users/-/collections/{subjectId}", accessToken, token, false);
+        }
+        catch (Exception e) when (IsCollectionNotFoundError(e))
+        {
+            return null;
+        }
+    }
+
     public async Task UpdateCollectionStatus(string accessToken, int subjectId, CollectionType type, CancellationToken token)
     {
         await Post($"{BaseUrl}/v0/users/-/collections/{subjectId}", new JsonContent(new CollectionStatus { Type = type }), accessToken, token);
@@ -446,5 +458,12 @@ public partial class BangumiApi
         request.Content = new JsonContent(new EpisodeCollectionInfo { Type = status });
         await Send(request, accessToken, token);
 #endif
+    }
+
+    private static bool IsCollectionNotFoundError(Exception exception)
+    {
+        return exception is HttpRequestException { StatusCode: HttpStatusCode.NotFound }
+               || exception.Message.Contains("[404]", StringComparison.OrdinalIgnoreCase)
+               || exception.Message.Contains("Not Found", StringComparison.OrdinalIgnoreCase);
     }
 }

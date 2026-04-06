@@ -93,6 +93,8 @@
             if (container.querySelector('#EpisodeParser')) {
                 updateEpisodeParserDisplay();
             }
+
+            updateWatchingCollectionOptionDisplay();
         });
     }
 
@@ -201,10 +203,19 @@
         updateEpisodeParserDisplay();
     });
 
+    container.querySelector('#UpdateExistingCollectionToWatching').addEventListener('change', function () {
+        updateWatchingCollectionOptionDisplay();
+    });
+
     function updateEpisodeParserDisplay() {
         const parser = container.querySelector('#EpisodeParser').value;
         container.querySelectorAll('.episode-parser-options').forEach(el => {
             el.style.display = el.getAttribute('episode-parser') === parser ? '' : 'none';
         });
+    }
+
+    function updateWatchingCollectionOptionDisplay() {
+        var updateExisting = container.querySelector('#UpdateExistingCollectionToWatching').checked;
+        container.querySelector('#UpdateWatchedCollectionToWatching').disabled = !updateExisting;
     }
 })();
