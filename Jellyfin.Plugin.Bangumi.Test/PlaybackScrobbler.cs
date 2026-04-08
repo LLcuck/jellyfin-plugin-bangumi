@@ -44,4 +44,12 @@ public class PlaybackScrobbler
             updateExistingCollectionToWatching: true,
             updateWatchedCollectionToWatching: true));
     }
+
+    [TestMethod]
+    public void GetSubjectCollectionStatusUrl_UsesActualBangumiUsername()
+    {
+        var url = BangumiApi.GetSubjectCollectionStatusUrl("https://api.bgm.tv", "alice", 42);
+
+        Assert.AreEqual("https://api.bgm.tv/v0/users/alice/collections/42", url);
+    }
 }

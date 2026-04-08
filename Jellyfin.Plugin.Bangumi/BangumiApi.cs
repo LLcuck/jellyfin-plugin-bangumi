@@ -420,16 +420,35 @@ public partial class BangumiApi
         return await Get<DataList<EpisodeCollectionInfo>>($"{BaseUrl}/v0/users/-/collections/{subjectId}/episodes?episode_type={episodeType}", accessToken, token, false);
     }
 
-    public async Task<SubjectCollectionInfo?> GetSubjectCollectionStatus(string accessToken, int subjectId, CancellationToken token)
+    public async Task<SubjectCollectionInfo?> GetSubjectCollectionStatus(
+        string accessToken,
+        int subjectId,
+        CancellationToken token,
+        string? userName = null)
     {
+        if (subjectId <= 0)
+            return null;
+
+        userName = string.IsNullOrWhiteSpace(userName)
+            ? (await GetAccountInfo(accessToken, token))?.UserName
+            : userName;
+
+        if (string.IsNullOrWhiteSpace(userName))
+            return null;
+
         try
         {
-            return await Get<SubjectCollectionInfo>($"{BaseUrl}/v0/users/-/collections/{subjectId}", accessToken, token, false);
+            return await Get<SubjectCollectionInfo>(GetSubjectCollectionStatusUrl(BaseUrl, userName, subjectId), accessToken, token, false);
         }
         catch (Exception e) when (IsCollectionNotFoundError(e))
         {
             return null;
         }
+    }
+
+    internal static string GetSubjectCollectionStatusUrl(string baseUrl, string userName, int subjectId)
+    {
+        return $"{baseUrl}/v0/users/{Uri.EscapeDataString(userName)}/collections/{subjectId}";
     }
 
     public async Task UpdateCollectionStatus(string accessToken, int subjectId, CollectionType type, CancellationToken token)
