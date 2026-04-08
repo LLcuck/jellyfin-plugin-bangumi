@@ -130,7 +130,7 @@ public class PlaybackScrobbler(IUserDataManager userDataManager, OAuthStore stor
                 }
 
                 if (played)
-                    await EnsureSubjectWatchingStatus(user.AccessToken, subjectId, CancellationToken.None);
+                    await EnsureSubjectWatchingStatus(user.AccessToken, user.UserName, subjectId, CancellationToken.None);
 
                 log.Info("report episode #{Episode} status {Status} to bangumi",
                     episodeId,
@@ -147,7 +147,7 @@ public class PlaybackScrobbler(IUserDataManager userDataManager, OAuthStore stor
         {
             if (played && IsErrorFromUncollectedSubject(e))
             {
-                await EnsureSubjectWatchingStatus(user.AccessToken, subjectId, CancellationToken.None);
+                await EnsureSubjectWatchingStatus(user.AccessToken, user.UserName, subjectId, CancellationToken.None);
 
                 log.Info("report episode #{Episode} status {Status} to bangumi", episodeId, EpisodeCollectionType.Watched);
                 await api.UpdateEpisodeStatus(user.AccessToken,
@@ -178,7 +178,7 @@ public class PlaybackScrobbler(IUserDataManager userDataManager, OAuthStore stor
         }
     }
 
-    private async Task EnsureSubjectWatchingStatus(string accessToken, int subjectId, CancellationToken token)
+    private async Task EnsureSubjectWatchingStatus(string accessToken, string? userName, int subjectId, CancellationToken token)
     {
         if (subjectId <= 0)
         {
@@ -186,7 +186,7 @@ public class PlaybackScrobbler(IUserDataManager userDataManager, OAuthStore stor
             return;
         }
 
-        var subjectCollection = await api.GetSubjectCollectionStatus(accessToken, subjectId, token);
+        var subjectCollection = await api.GetSubjectCollectionStatus(accessToken, subjectId, token, userName);
         var currentStatus = subjectCollection?.Status ?? CollectionType.None;
         if (!ShouldUpdateSubjectCollectionToWatching(
                 currentStatus,
