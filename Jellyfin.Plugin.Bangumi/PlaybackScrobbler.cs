@@ -129,6 +129,9 @@ public class PlaybackScrobbler(IUserDataManager userDataManager, OAuthStore stor
                     return;
                 }
 
+                if (played)
+                    await EnsureSubjectWatchingStatus(user.AccessToken, subjectId, CancellationToken.None);
+
                 log.Info("report episode #{Episode} status {Status} to bangumi",
                     episodeId,
                     played ? EpisodeCollectionType.Watched : EpisodeCollectionType.Default);
@@ -144,8 +147,7 @@ public class PlaybackScrobbler(IUserDataManager userDataManager, OAuthStore stor
         {
             if (played && IsErrorFromUncollectedSubject(e))
             {
-                log.Info("report subject #{Subject} status {Status} to bangumi", subjectId, CollectionType.Watching);
-                await api.UpdateCollectionStatus(user.AccessToken, subjectId, CollectionType.Watching, CancellationToken.None);
+                await EnsureSubjectWatchingStatus(user.AccessToken, subjectId, CancellationToken.None);
 
                 log.Info("report episode #{Episode} status {Status} to bangumi", episodeId, EpisodeCollectionType.Watched);
                 await api.UpdateEpisodeStatus(user.AccessToken,
@@ -156,6 +158,7 @@ public class PlaybackScrobbler(IUserDataManager userDataManager, OAuthStore stor
             else
             {
                 log.Error("report playback status failed: {Error}", e);
+                return;
             }
         }
 
@@ -175,5 +178,58 @@ public class PlaybackScrobbler(IUserDataManager userDataManager, OAuthStore stor
         }
     }
 
-    internal static bool IsErrorFromUncollectedSubject(Exception e) => e.Message.Contains("need to add subject to your collection");
+    private async Task EnsureSubjectWatchingStatus(string accessToken, int subjectId, CancellationToken token)
+    {
+        if (subjectId <= 0)
+        {
+            log.Warn("bangumi subject id is missing, skipped subject status update");
+            return;
+        }
+
+        var subjectCollection = await api.GetSubjectCollectionStatus(accessToken, subjectId, token);
+        var currentStatus = subjectCollection?.Status ?? CollectionType.None;
+        if (!ShouldUpdateSubjectCollectionToWatching(
+                currentStatus,
+                Configuration.UpdateExistingCollectionToWatching,
+                Configuration.UpdateWatchedCollectionToWatching))
+        {
+            switch (currentStatus)
+            {
+                case CollectionType.Watching:
+                    log.Info("subject #{Subject} is already watching, ignored", subjectId);
+                    break;
+                case CollectionType.Watched:
+                    log.Info("subject #{Subject} is watched and watched-to-watching sync is disabled, ignored", subjectId);
+                    break;
+                default:
+                    log.Info("subject #{Subject} already has collection status {Status}, ignored", subjectId, currentStatus);
+                    break;
+            }
+
+            return;
+        }
+
+        log.Info("report subject #{Subject} status {Status} to bangumi", subjectId, CollectionType.Watching);
+        await api.UpdateCollectionStatus(accessToken, subjectId, CollectionType.Watching, token);
+    }
+
+    internal static bool ShouldUpdateSubjectCollectionToWatching(
+        CollectionType currentStatus,
+        bool updateExistingCollectionToWatching,
+        bool updateWatchedCollectionToWatching)
+    {
+        if (currentStatus == CollectionType.None)
+            return true;
+
+        if (currentStatus == CollectionType.Watching)
+            return false;
+
+        if (!updateExistingCollectionToWatching)
+            return false;
+
+        return currentStatus != CollectionType.Watched || updateWatchedCollectionToWatching;
+    }
+
+    internal static bool IsErrorFromUncollectedSubject(Exception e) =>
+        e.Message.Contains("need to add subject to your collection", StringComparison.OrdinalIgnoreCase);
 }

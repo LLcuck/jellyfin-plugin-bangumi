@@ -11,22 +11,21 @@ public partial class BangumiApi
     private static async Task HandleHttpException(HttpResponseMessage response, CancellationToken token = default)
     {
         var requestUri = response.RequestMessage?.RequestUri;
-        var statusCode = (int)response.StatusCode;
-        Exception exception = new HttpIOException(HttpRequestError.Unknown, $"unknown response from {requestUri}: {response.ReasonPhrase}");
+        var message = $"unknown response from {requestUri} {(int)response.StatusCode}: {response.ReasonPhrase}";
         try
         {
             var content = await response.Content.ReadAsStringAsync(token);
-            exception = new HttpIOException(HttpRequestError.Unknown, $"unknown response from {requestUri} {statusCode}: {content}");
+            message = $"unknown response from {requestUri} {(int)response.StatusCode}: {content}";
             var result = JsonSerializer.Deserialize<Response>(content, Constants.JsonSerializerOptions);
             if (result?.Title != null)
-                exception = new HttpIOException(HttpRequestError.InvalidResponse, $"{result.Title}: {result.Description}");
+                message = $"{result.Title}: {result.Description}";
         }
         catch
         {
             // ignored
         }
 
-        throw exception;
+        throw new HttpRequestException(message, null, response.StatusCode);
     }
 
     private sealed class Response

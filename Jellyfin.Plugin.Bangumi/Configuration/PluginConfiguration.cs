@@ -30,6 +30,10 @@ public class PluginConfiguration : BasePluginConfiguration
 
     public bool ReportManualStatusChangeToBangumi { get; set; } = false;
 
+    public bool UpdateExistingCollectionToWatching { get; set; } = false;
+
+    public bool UpdateWatchedCollectionToWatching { get; set; } = false;
+
     public bool TrustExistedBangumiId { get; set; } = false;
 
     public bool UseBangumiSeasonTitle { get; set; } = true;

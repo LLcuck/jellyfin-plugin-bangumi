@@ -56,6 +56,24 @@
                 <div class="selectContainer">
                     <div class="checkboxContainer checkboxContainer-withDescription">
                         <label class="emby-checkbox-label">
+                            <input id="UpdateExistingCollectionToWatching" is="emby-checkbox" type="checkbox"/>
+                            <span>播放时将已有收藏状态条目改为“在看”</span>
+                        </label>
+                        <div class="fieldDescription">关闭时仅会把未收藏条目加入“在看”。</div>
+                    </div>
+                </div>
+                <div class="selectContainer">
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input id="UpdateWatchedCollectionToWatching" is="emby-checkbox" type="checkbox"/>
+                            <span>允许将“看过”条目改为“在看”</span>
+                        </label>
+                        <div class="fieldDescription">仅在启用上一个选项后生效；已经是“在看”的条目不会重复修改。</div>
+                    </div>
+                </div>
+                <div class="selectContainer">
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
                             <input id="SkipNSFWPlaybackReport" is="emby-checkbox" type="checkbox"/>
                             <span>忽略被标记为 NSFW 的内容</span>
                         </label>
