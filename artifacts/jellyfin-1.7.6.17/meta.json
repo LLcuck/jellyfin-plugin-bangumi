@@ -1,1 +1,0 @@
-{"category":"Metadata","changelog":"","description":"Jellyfin bgm.tv 数据源插件，用于拉取中文番剧信息及图片。","guid":"41b59f1b-a6cf-474a-b416-785379cbd856","name":"Bangumi","overview":"bgm.tv metadata provider for Jellyfin","owner":"kookxiang","targetAbi":"10.11.0.0","timestamp":"2026-04-06T09:48:15","version":"1.7.6.17","imageUrl":"https://kookxiang.github.io/jellyfin-plugin-bangumi/poster.png"}

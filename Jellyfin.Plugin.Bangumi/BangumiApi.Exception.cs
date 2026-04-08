@@ -11,7 +11,7 @@ public partial class BangumiApi
     private static async Task HandleHttpException(HttpResponseMessage response, CancellationToken token = default)
     {
         var requestUri = response.RequestMessage?.RequestUri;
-        var message = $"unknown response from {requestUri}: {response.ReasonPhrase}";
+        var message = $"unknown response from {requestUri} {(int)response.StatusCode}: {response.ReasonPhrase}";
         try
         {
             var content = await response.Content.ReadAsStringAsync(token);

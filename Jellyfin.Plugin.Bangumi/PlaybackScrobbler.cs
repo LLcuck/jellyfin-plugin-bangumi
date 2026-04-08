@@ -120,9 +120,6 @@ public class PlaybackScrobbler(IUserDataManager userDataManager, OAuthStore stor
                     return;
                 }
 
-                if (played)
-                    await EnsureSubjectWatchingStatus(user.AccessToken, subjectId, CancellationToken.None);
-
                 var episodeStatus = await api.GetEpisodeStatus(user.AccessToken, episodeId, CancellationToken.None);
                 if (episodeStatus?.Type == EpisodeCollectionType.Watched)
                 {
@@ -131,6 +128,9 @@ public class PlaybackScrobbler(IUserDataManager userDataManager, OAuthStore stor
                         item.Id);
                     return;
                 }
+
+                if (played)
+                    await EnsureSubjectWatchingStatus(user.AccessToken, subjectId, CancellationToken.None);
 
                 log.Info("report episode #{Episode} status {Status} to bangumi",
                     episodeId,
