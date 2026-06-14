@@ -94,6 +94,7 @@ public class PlaybackScrobbler(IUserDataManager userDataManager, OAuthStore stor
             return;
         }
 
+        var reportPrivate = false;
         try
         {
             if (item is Book)
@@ -119,6 +120,7 @@ public class PlaybackScrobbler(IUserDataManager userDataManager, OAuthStore stor
                     log.Info("item #{Name} marked as NSFW, skipped", item.Name);
                     return;
                 }
+                reportPrivate = subject?.IsNSFW == true && Configuration.PrivateNSFWPlaybackReport;
 
                 var episodeStatus = await api.GetEpisodeStatus(user.AccessToken, episodeId, CancellationToken.None);
                 if (episodeStatus?.Type == EpisodeCollectionType.Watched)
@@ -130,7 +132,12 @@ public class PlaybackScrobbler(IUserDataManager userDataManager, OAuthStore stor
                 }
 
                 if (played)
-                    await EnsureSubjectWatchingStatus(user.AccessToken, user.UserName, subjectId, CancellationToken.None);
+                    await EnsureSubjectWatchingStatus(
+                        user.AccessToken,
+                        user.UserName,
+                        subjectId,
+                        reportPrivate,
+                        CancellationToken.None);
 
                 log.Info("report episode #{Episode} status {Status} to bangumi",
                     episodeId,
@@ -147,7 +154,12 @@ public class PlaybackScrobbler(IUserDataManager userDataManager, OAuthStore stor
         {
             if (played && IsErrorFromUncollectedSubject(e))
             {
-                await EnsureSubjectWatchingStatus(user.AccessToken, user.UserName, subjectId, CancellationToken.None);
+                await EnsureSubjectWatchingStatus(
+                    user.AccessToken,
+                    user.UserName,
+                    subjectId,
+                    reportPrivate,
+                    CancellationToken.None);
 
                 log.Info("report episode #{Episode} status {Status} to bangumi", episodeId, EpisodeCollectionType.Watched);
                 await api.UpdateEpisodeStatus(user.AccessToken,
@@ -174,11 +186,16 @@ public class PlaybackScrobbler(IUserDataManager userDataManager, OAuthStore stor
         if (epList is { Total: > 0 } && epList.Data.All(ep => ep.Type == EpisodeCollectionType.Watched))
         {
             log.Info("report subject #{Subject} status {Status} to bangumi", subjectId, CollectionType.Watched);
-            await api.UpdateCollectionStatus(user.AccessToken, subjectId, CollectionType.Watched, CancellationToken.None);
+            await api.UpdateCollectionStatus(user.AccessToken, subjectId, CollectionType.Watched, CancellationToken.None, reportPrivate);
         }
     }
 
-    private async Task EnsureSubjectWatchingStatus(string accessToken, string? userName, int subjectId, CancellationToken token)
+    private async Task EnsureSubjectWatchingStatus(
+        string accessToken,
+        string? userName,
+        int subjectId,
+        bool isPrivate,
+        CancellationToken token)
     {
         if (subjectId <= 0)
         {
@@ -210,7 +227,7 @@ public class PlaybackScrobbler(IUserDataManager userDataManager, OAuthStore stor
         }
 
         log.Info("report subject #{Subject} status {Status} to bangumi", subjectId, CollectionType.Watching);
-        await api.UpdateCollectionStatus(accessToken, subjectId, CollectionType.Watching, token);
+        await api.UpdateCollectionStatus(accessToken, subjectId, CollectionType.Watching, token, isPrivate);
     }
 
     internal static bool ShouldUpdateSubjectCollectionToWatching(

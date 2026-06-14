@@ -3,8 +3,10 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Security;
 using System.Text;
 using System.Text.Json;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.Bangumi.Archive;
@@ -96,21 +98,24 @@ public partial class BangumiApi(ArchiveData archive, OAuthStore store, Logger<Ba
 
     public HttpClient GetHttpClient(bool allowAutoRedirect = true)
     {
-#pragma warning disable CA2000, CA5399
+#pragma warning disable CA2000, CA5399, CA5400
         var handler = new HttpClientHandler
         {
             AllowAutoRedirect = allowAutoRedirect,
             UseProxy = !string.IsNullOrEmpty(_plugin.Configuration.ProxyServerUrl),
             Proxy = !string.IsNullOrEmpty(_plugin.Configuration.ProxyServerUrl) ? new WebProxy(_plugin.Configuration.ProxyServerUrl) : HttpClient.DefaultProxy,
         };
+        if (_plugin.Configuration.IgnoreSslErrors)
+            handler.ServerCertificateCustomValidationCallback = static (_, _, _, _) => true;
         var httpClient = new HttpClient(handler, true);
-#pragma warning restore CA2000, CA5399
+#pragma warning restore CA2000, CA5399, CA5400
         httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Jellyfin.Plugin.Bangumi", _plugin.Version.ToString()));
         httpClient.DefaultRequestHeaders.UserAgent.Add(
             new ProductInfoHeaderValue("(https://github.com/kookxiang/jellyfin-plugin-bangumi)"));
         httpClient.Timeout = TimeSpan.FromMilliseconds(_plugin.Configuration.RequestTimeout);
         return httpClient;
     }
+
 }
 
 public class JsonContent : StringContent

@@ -129,7 +129,16 @@
             }
 
             updateWatchingCollectionOptionDisplay();
+            updateNSFWReportDisplay();
         });
+    }
+
+    function updateNSFWReportDisplay() {
+        var skipNSFWReport = container.querySelector('#SkipNSFWPlaybackReport');
+        var privateNSFWReportContainer = container.querySelector('#PrivateNSFWPlaybackReportContainer');
+        if (!skipNSFWReport || !privateNSFWReportContainer) return;
+
+        privateNSFWReportContainer.style.display = skipNSFWReport.checked ? 'none' : '';
     }
 
     function saveConfiguration() {
@@ -177,6 +186,8 @@
         e.preventDefault();
         saveConfiguration();
     });
+
+    container.querySelector('#SkipNSFWPlaybackReport').addEventListener('change', updateNSFWReportDisplay);
 
     container.querySelector('#bangumi-oauth-btn').addEventListener('click', function (e) {
         e.preventDefault();
